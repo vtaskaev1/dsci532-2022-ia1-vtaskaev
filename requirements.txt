@@ -1,3 +1,5 @@
 dash
 plotly
 gunicorn
+vega_datasets
+altair
