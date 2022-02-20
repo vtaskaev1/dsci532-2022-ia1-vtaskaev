@@ -1,5 +1,6 @@
-dash
-plotly
-gunicorn
-vega_datasets
 altair
+dash
+numpy
+pandas
+vega_datasets
+gunicorn

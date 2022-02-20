@@ -1,55 +1,59 @@
-from dash import Dash, dcc, html, Input, Output
+from dash import Dash, html, dcc, Input, Output
 import altair as alt
 from vega_datasets import data
+import pandas as pd
+import numpy as np
 
-cars = data.cars()
 
-app = Dash(__name__, external_stylesheets=[
+# Setup app and layout/frontend
+app = Dash(__name__,  external_stylesheets=[
            'https://codepen.io/chriddyp/pen/bWLwgP.css'])
 server = app.server
 
 app.layout = html.Div([
-    dcc.Input(id='widget-1'),
-    html.Div(id='widget-2'),
-    html.Div('Hello blue dash', style={'color': 'blue', 'fontSize': 44}),
-    html.Br(),
-    html.Br(),
-    html.Br(),
-    html.Br(),
-    html.P('Hi there', id='my-para', style={'background-color': 'red'}),
-    'This is my slider',
-    dcc.Slider(min=0, max=5, value=2, marks={0: '0', 5: '5'}),
-    'This is my dropdown',
-    dcc.Dropdown(
-        options=[
-            {'label': 'New York City', 'value': 'NYC'},
-            {'label': 'San Francisco', 'value': 'SF'}],
-        placeholder='Select a city here...'),
-    'This is my dropdown selection',
-    dcc.Dropdown(
-        options=[
-            {'label': 'New York City', 'value': 'NYC'},
-            {'label': 'San Francisco', 'value': 'SF'}],
-        value='SF', multi=True),
+    html.H1('RadioItems / Checklist comparison'),
     html.Iframe(
-        id='scatter',
-        style={'border-width': '0', 'width': '100%', 'height': '400px'}),
-    dcc.Dropdown(
-        id='xcol-widget',
-        value='Horsepower',  # REQUIRED to show the plot on the first page load
-        options=[{'label': col, 'value': col} for col in cars.columns])
-], style={'marginTop': 50})
+        id='iframe',
+        style={'border-width': '0',
+               'width': '100%',
+               'height': '400px',
+               "top": "50%",
+               "left": "50%", }),
+    html.H3('Checklist'),
+    html.P('The user can visualize multiple options at the same time'),
+    dcc.Checklist(
+        id='check',
+        options=['A', 'B', 'C'],
+        value=['A', 'B', 'C']),
+    html.H3('RadioItems'),
+    html.P('The user can select only one option (the options are mutually exclusive )'),
+    dcc.RadioItems(id='radio',
+                   options=['set1',
+                            'set2',
+                            'tableau10',
+                            'accent',
+                            'dark2'],
+                   value='set1')])
 
 
+# Set up callbacks/backend
 @app.callback(
-    Output('scatter', 'srcDoc'),
-    Input('xcol-widget', 'value'))
-def plot_altair(xcol):
-    chart = alt.Chart(cars).mark_point().encode(
-        x=xcol,
-        y='Displacement',
-        tooltip='Horsepower').interactive()
-    return chart.to_html()
+    Output('iframe', 'srcDoc'),
+    Input('check', 'value'),
+    Input('radio', 'value')
+)
+def plot_altair(cat, color):
+    np.random.seed(42)
+    source = pd.DataFrame(np.cumsum(np.random.randn(100, 3), 0).round(2),
+                          columns=['A', 'B', 'C'], index=pd.RangeIndex(100, name='x'))
+    source = source.reset_index().melt('x', var_name='category', value_name='y')
+    source = source[source["category"].isin(cat)]
+    line = alt.Chart(source).mark_line(interpolate='basis').encode(
+        x='x:Q',
+        y='y:Q',
+        color='category:N').configure_range(
+        category={'scheme': color})
+    return line.to_html()
 
 
 if __name__ == '__main__':
