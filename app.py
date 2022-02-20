@@ -6,6 +6,7 @@ cars = data.cars()
 
 app = Dash(__name__, external_stylesheets=[
            'https://codepen.io/chriddyp/pen/bWLwgP.css'])
+server = app.server
 
 app.layout = html.Div([
     dcc.Input(id='widget-1'),
